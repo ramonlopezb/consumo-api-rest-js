@@ -2,6 +2,8 @@ const API_URL_RANDOM ='https://api.thecatapi.com/v1/images/search?limit=2&api_ke
 
 const API_URL_FAVOTITES ='https://api.thecatapi.com/v1/favourites?api_key=live_kMC717SOaEVRLA7YxIQ8IruKzLrNJ2VJb3HVhHzEy2XWJvYQmT0wOIM7LO0ZG5I8';
 
+const API_URL_FAVOTITES_DELETE = (id)=>`https://api.thecatapi.com/v1/favourites/${id}?api_key=live_kMC717SOaEVRLA7YxIQ8IruKzLrNJ2VJb3HVhHzEy2XWJvYQmT0wOIM7LO0ZG5I8`;
+
 const spanError = document.getElementById("error");
 
 async function loadRandomMichis(){
@@ -11,16 +13,21 @@ async function loadRandomMichis(){
    console.log(data);
 
    if(res.status !== 200){
-      spanError.innerHTML = "hubo un error: " + res.status;
+      spanError.innerHTML = "hubo un error: " + res.status + data.message;
    } else {
    const img1 = document.getElementById('img1');
    const img2 = document.getElementById('img2');
-     
+   const btn1 = document.getElementById('btn1');
+   const btn2 = document.getElementById('btn2'); 
+
    img1.src = data[0].url;
    img2.src = data[1].url;
+
+   btn1.onclick = () => saveFavouriteMichi(data[0].id);
+   btn2.onclick = () => saveFavouriteMichi(data[1].id);
    }     
      };
-     
+
      async function loadFavouriteMichis(){
       const res = await fetch(API_URL_FAVOTITES);
       const data = await res.json();
@@ -29,33 +36,73 @@ async function loadRandomMichis(){
 
       if(res.status !== 200){
          spanError.innerHTML = "hubo un error: " + res.status + data.message;   
-      }   
+      } else {
+         const section = document.getElementById('favoriteMichis');
+         section.innerHTML = "";
+
+         const h2 = document.createElement('h2');
+         const h2Text = document.createTextNode('Michis favoritos');
+         h2.appendChild(h2Text);
+         section.appendChild(h2);
+
+         data.forEach(michi =>{
+            const section = document.getElementById('favoriteMichis');
+            const article = document.createElement('article');
+            const img = document.createElement('img');
+            const btn = document.createElement('button');
+            const btnText = document.createTextNode('Sacar michi de favoritos');
+
+            
+            img.src = michi.image.url;
+            img.width= 150;
+            btn.appendChild(btnText);
+            btn.onclick = () => deleteFavouriteMichi(michi.id);
+            article.appendChild(img);
+            article.appendChild(btn);
+            section.appendChild(article);          
+         });
+      }  
       };
 
-      async function saveFavouriteMichis(){
-        
-         var myHeaders = new Headers();
-         myHeaders.append("Content-Type", "application/json");
-         myHeaders.append("x-api-key", "live_kMC717SOaEVRLA7YxIQ8IruKzLrNJ2VJb3HVhHzEy2XWJvYQmT0wOIM7LO0ZG5I8");
+      async function saveFavouriteMichi(id){
+         const res = await fetch(API_URL_FAVOTITES, {
+            method:'POST',
+            headers: {
+               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+               image_id:id
+            }),
+         }); 
+      
+         const data = await res.json();                        
+             
 
-         var raw = JSON.stringify({
-            "image_id": "d46",
-            "sub_id": "my-user-1234"
-         });
+         console.log('save');
+         console.log(res);
 
-         var requestOptions = {
-            method: 'POST',
-            headers: myHeaders,
-            body: raw,
-            redirect: 'follow'
-         };
+         if(res.status !== 200){
+            spanError.innerHTML = "hubo un error: " + res.status + data.message;   
+         } else{
+            console.log('Michi Guardado de Favoritos');
+            loadFavouriteMichis();
+         } 
+      }
+          
+         async function deleteFavouriteMichi(id){
+            const res = await fetch(API_URL_FAVOTITES_DELETE(id),{
+               method:'DELETE',
+              
+            });                     
+            const data = await res.json();
 
-         fetch("https://api.thecatapi.com/v1/favourites", requestOptions)
-            .then(response => response.text())
-            .then(result => console.log(result))
-            .catch(error => console.log('error', error));
-
-      }       
+            if(res.status !== 200){
+               spanError.innerHTML = "hubo un error: " + res.status + data.message;   
+            } else{
+               console.log('Michi Borrado de Favoritos');
+            }   
+                    
+          }     
       
 
     loadRandomMichis();
